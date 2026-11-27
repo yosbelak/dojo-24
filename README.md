@@ -10,7 +10,7 @@ running [ostris/ai-toolkit](https://github.com/ostris/ai-toolkit) underneath.
 ![Rust](https://img.shields.io/badge/Rust-2024-orange?style=flat-square&logo=rust)
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square&logo=windows)
 ![GPU](https://img.shields.io/badge/GPU-24%20GB%20(RTX%203090%20%2F%204090)-76B900?style=flat-square&logo=nvidia)
-![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](LICENSE)
 
 <img src="docs/screenshots/job.jpg" alt="A training job: progress, loss and GPU memory charts, preview images and the engine log" width="100%">
 
@@ -95,3 +95,9 @@ this page come from one of them, using procedurally painted demo images:
 DOJO_TEST_DATASET=<folder with a few images> cargo test --release ui_ -- --ignored --nocapture
 DOJO_README_SHOTS=docs/screenshots cargo test --release readme_ -- --ignored --nocapture
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE). ai-toolkit, downloaded by `setup.bat`, has its own MIT license, and
+each model has its own terms: check the Krea 2, MOSS-Image and MiniMax-H3 licences before
+sharing what you train.

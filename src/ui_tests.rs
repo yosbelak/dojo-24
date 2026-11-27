@@ -115,7 +115,7 @@ fn ui_plan_every_model_then_queue_a_job() {
     d.click("Create job");
     assert!(matches!(d.app.page, Page::Job(_)), "Create job should open the job page");
     d.snap("2_job");
-    d.click("Back");
+    d.click("Queue");
     assert_eq!(d.app.page, Page::Queue);
     assert_eq!(d.app.views.len(), 1);
     assert_eq!(d.app.views[0].status, "queued");

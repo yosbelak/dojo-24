@@ -13,6 +13,8 @@ mod sniff;
 mod thumbs;
 #[cfg(test)]
 mod ui_tests;
+#[cfg(test)]
+mod readme_shots;
 
 fn main() -> Result<(), String> {
     let paths = settings::Paths::new(settings::root());

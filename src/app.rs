@@ -147,7 +147,7 @@ pub struct DojoApp {
     pub steps: String,
     pub rank: String,
     pub lr: String,
-    te: usize,
+    pub te: usize,
     pub prompts: String,
     pub previews: bool,
     pub copy: bool,
@@ -482,7 +482,9 @@ impl DojoApp {
     fn sidebar(&mut self, ctx: &mut Context) {
         let r = rect(GAP, GAP, SIDEBAR_W, ctx.screen.height() - 2.0 * GAP);
         let gpu = self.gpu();
-        let active: Vec<JobView> = self.views.iter().filter(|v| v.active()).take(3).cloned().collect();
+        let mut active: Vec<JobView> = self.views.iter().filter(|v| v.active()).cloned().collect();
+        active.sort_by_key(|v| !v.running());
+        active.truncate(3);
         let mut go: Option<Page> = None;
         Panel::new("sidebar", r).corner(Corner::Radius(26.0)).material(ctx.theme.thick).padding(14.0).show(ctx, |ui| {
             ui.horizontal(|ui| {
@@ -497,13 +499,17 @@ impl DojoApp {
                 });
             });
             ui.space(14.0);
-            let mut sel = match self.page {
+            let sel = match self.page {
                 Page::New => 0,
                 Page::Queue | Page::Job(_) => 1,
                 Page::Fit => 2,
             };
-            if nav_list(ui, &mut sel, &NAV) {
-                go = Some([Page::New, Page::Queue, Page::Fit][sel].clone());
+            if let Some(i) = nav(ui, sel, &NAV) {
+                // a job's page highlights Queue too, so clicking Queue there still goes back
+                let target = [Page::New, Page::Queue, Page::Fit][i].clone();
+                if target != self.page {
+                    go = Some(target);
+                }
             }
             ui.space(12.0);
             for v in &active {
@@ -663,7 +669,11 @@ impl DojoApp {
         let left_w = (area.width() * 0.47).clamp(420.0, 620.0);
         let left = Rect { min: area.min, max: vec2(area.min.x + left_w, area.max.y) };
         let right = Rect { min: vec2(left.max.x + GAP, area.min.y), max: area.max };
-        let mem = Rect { min: right.min, max: vec2(right.max.x, right.min.y + 250.0) };
+        let short = match (&self.plan, self.gpu()) {
+            (Some(Ok(p)), Some(g)) => p.budget.need_gb + 0.5 > g.free_gb,
+            _ => false,
+        };
+        let mem = Rect { min: right.min, max: vec2(right.max.x, right.min.y + if short { 236.0 } else { 196.0 }) };
         let why = Rect { min: vec2(right.min.x, mem.max.y + GAP), max: right.max };
         let cat = self.catalog();
         Panel::new("form", left).corner(Corner::Radius(24.0)).material(ctx.theme.thick).padding(14.0).show(ctx, |ui| {
@@ -1014,7 +1024,13 @@ impl DojoApp {
                 let w = ui.available_width() - 8.0;
                 ui.horizontal(|ui| {
                     pill(ui, status_label(&v.status), status_color(&v.status));
-                    let head = if v.running() { if v.phase.is_empty() { "Training".to_string() } else { v.phase.clone() } } else { v.message.clone() };
+                    let head = if v.running() && v.step > 0 {
+                        format!("{:.0}% done{}", v.progress() * 100.0, if v.eta.is_empty() { String::new() } else { format!(", about {} left", v.eta) })
+                    } else if v.running() {
+                        if v.phase.is_empty() { "Loading the model".to_string() } else { v.phase.clone() }
+                    } else {
+                        v.message.clone()
+                    };
                     ui.styled_text(&truncate(&head, 110), TextStyle::new(13.0), MUTED);
                 });
                 ui.space(4.0);
@@ -1270,6 +1286,48 @@ fn bar(ui: &mut Ui, w: f32, h: f32, value: f32, color: Color) {
     if v > 0.0005 {
         p.fill(Rect::from_min_size(r.min, vec2((r.width() * v).max(h), h)), Corner::Capsule, color);
     }
+}
+
+/// The sidebar list: rust-glass's nav_list look (sliding capsule), but it reports every
+/// click, including one on the item that is already highlighted.
+fn nav(ui: &mut Ui, selected: usize, items: &[(Icon, &str)]) -> Option<usize> {
+    let w = ui.available_width();
+    let h = 38.0;
+    let id = ui.make_id("dojo_nav");
+    let old = ui.spacing;
+    ui.spacing = 2.0;
+    let top = ui.next_pos().y;
+    let y = ui.ctx.animate(id, selected as f32, Tuning::new(0.34, 0.78));
+    let hl = Rect::from_min_size(vec2(ui.cursor.x, top + y * (h + 2.0)), vec2(w, h));
+    let accent = ui.ctx.theme.accent.lerp(Color::WHITE, 0.35 * ui.surface.darkness());
+    let strong = ui.surface.strong_fill_color();
+    ui.painter().fill(hl, Corner::Capsule, strong);
+    let mut clicked = None;
+    for (i, (icon, label)) in items.iter().enumerate() {
+        let r = ui.allocate_response(vec2(w, h), Sense::Click);
+        ui.ctx.focusable(r.id);
+        if r.clicked {
+            clicked = Some(i);
+        }
+        if let Some(n) = ui.access(r.id, rust_glass::accessibility::Role::Tab, r.rect) {
+            n.label(*label).selected(selected == i);
+        }
+        if r.hovered {
+            ui.ctx.cursor = rust_glass::context::Cursor::Pointer;
+        }
+        let hov = ui.ctx.animate_bool(r.id.with("h"), r.hovered && i != selected, Tuning::SNAP);
+        let on = ui.ctx.animate_bool(r.id.with("on"), i == selected, Tuning::SNAP);
+        let st = TextStyle::new(ui.ctx.theme.body_size).weight(if i == selected { Weight::Semibold } else { Weight::Medium });
+        let l = ui.layout_text(label, &st);
+        let (f, t) = (ui.surface.fill_color(), ui.surface.text_color());
+        let mut p = ui.painter();
+        p.fill(r.rect, Corner::Capsule, f.fade(hov * 0.7));
+        p.icon(vec2(r.rect.min.x + 22.0, r.rect.center().y), 18.0, *icon, t.lerp(accent, on));
+        p.text(vec2(r.rect.min.x + 42.0, r.rect.center().y - l.size.y * 0.5), &l, t);
+        ui.focus_ring(r.id, r.rect, Corner::Capsule);
+    }
+    ui.spacing = old;
+    clicked
 }
 
 fn pill(ui: &mut Ui, text: &str, color: Color) {

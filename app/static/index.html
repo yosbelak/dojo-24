@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dojo 24</title>
+<style>
+/* Design language follows the ostris ai-toolkit UI: neutral grays, flat cards,
+   uppercase card titles, blue progress, green "create" action. */
+:root{
+  --g950:#0a0a0a; --g900:#171717; --g800:#262626; --g700:#404040; --g600:#525252; --g500:#737373;
+  --g400:#a3a3a3; --g300:#d4d4d4; --g200:#e5e5e5; --g100:#f5f5f5;
+  --blue:#3b82f6; --blue4:#60a5fa; --green:#16a34a; --green7:#15803d; --emerald:#10b981;
+  --amber:#f59e0b; --rose:#f43f5e; --red:#dc2626; --purple:#a855f7;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--g950);color:#ededed;font:14px/1.45 Arial,Helvetica,sans-serif;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+a{color:var(--blue4)}
+h1,h2,h3,p{margin:0}
+
+.app{display:flex;height:100vh}
+.side{width:236px;flex:none;background:var(--g900);display:flex;flex-direction:column}
+.brand{padding:12px 16px;font-size:16px}
+.brand b{text-transform:uppercase} .brand span{margin-left:8px;text-transform:uppercase;color:var(--g300)}
+.nav{list-style:none;margin:0;padding:16px 8px;display:grid;gap:8px;flex:1;align-content:start}
+.nav a{display:flex;align-items:center;padding:8px 16px;color:var(--g300);text-decoration:none;border-radius:8px;font-size:16px}
+.nav a:hover,.nav a.on{background:var(--g800)} .nav a.on{color:#fff}
+.nav svg{width:20px;height:20px;margin-right:12px;flex:none}
+.active{padding:0 12px 8px;display:grid;gap:8px}
+.active a{display:block;padding:8px 12px;background:var(--g800);border-radius:8px;text-decoration:none;color:var(--g100);font-size:12px}
+.active a:hover{background:var(--g950)}
+.active .t{display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thin{background:var(--g700);border-radius:999px;height:4px;margin-top:6px;overflow:hidden}
+.thin i{display:block;height:100%;background:var(--blue);border-radius:999px;transition:width .4s}
+.active .m{display:flex;justify-content:space-between;font-size:10px;color:var(--g400);margin-top:2px}
+.sidegpu{padding:10px 16px;border-top:1px solid var(--g800);font-size:12px;color:var(--g400)}
+.sidegpu b{color:var(--g200);font-weight:normal}
+.ver{text-align:center;font-size:10px;color:var(--g400);padding:4px;background:var(--g800)}
+
+main{flex:1;min-width:0;position:relative}
+.topbar{position:absolute;top:0;left:0;right:0;height:48px;background:var(--g900);display:flex;align-items:center;gap:8px;padding:0 12px;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.topbar h1{font-size:18px;font-weight:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grow{flex:1}
+.content{position:absolute;top:48px;left:0;right:0;bottom:0;overflow:auto;padding:16px}
+.view{display:none} .view.on{display:block}
+
+.btn{background:var(--g800);color:var(--g200);border:0;border-radius:6px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--g700)}
+.btn.green{background:var(--green);color:#fff} .btn.green:hover{background:var(--green7)}
+.btn.red{background:var(--red);color:#fff} .btn.red:hover{background:#b91c1c}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sm{font-size:12px;padding:4px 8px;border-radius:4px}
+
+.grid{display:grid;gap:24px;margin-bottom:24px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))} .g2{grid-template-columns:repeat(2,minmax(0,1fr))} .g3{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+@media (max-width:1180px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){.g4,.g2,.g3{grid-template-columns:minmax(0,1fr)}.side{display:none}}
+.card{background:var(--g900);border-radius:8px;padding:8px 16px 16px;min-width:0}
+.card>h2,.card>summary h2{font-size:18px;font-weight:600;text-transform:uppercase;color:var(--g500);margin-bottom:8px}
+details.card>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--g400);border-bottom:2px solid var(--g400);transform:rotate(45deg);margin:0 4px 6px}
+details.card[open]>summary::after{transform:rotate(-135deg);margin-bottom:0}
+details.card:not([open]){padding-bottom:8px} details.card:not([open])>summary h2{margin-bottom:0}
+label.l{display:block;font-size:12px;margin:8px 0 4px;color:var(--g300)}
+input[type=text],input[type=number],select,textarea{width:100%;background:var(--g800);border:1px solid var(--g700);border-radius:2px;padding:4px 12px;font-size:14px;color:var(--g100)}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px var(--g600)}
+input::placeholder,textarea::placeholder{color:var(--g500)}
+textarea{min-height:110px;resize:vertical;padding:8px 12px}
+.inrow{display:flex;gap:8px} .inrow input{flex:1;min-width:0}
+.hint{font-size:12px;color:var(--g400);margin-top:6px}
+.sw{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:14px;color:var(--g300);cursor:pointer}
+.sw input{position:absolute;opacity:0}
+.sw i{width:44px;height:24px;border-radius:999px;background:var(--g600);position:relative;flex:none;transition:background .2s}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw input:checked+i{background:var(--blue)} .sw input:checked+i::after{transform:translateX(20px)}
+.sw input:focus-visible+i{outline:2px solid var(--blue);outline-offset:2px}
+.note{display:flex;gap:8px;align-items:center;border-radius:6px;padding:8px 12px;font-size:14px;margin-top:8px}
+.note.blue{background:rgba(23,37,84,.6);border:1px solid #1e40af;color:#bfdbfe}
+.note.yellow{background:rgba(66,32,6,.6);border:1px solid #854d0e;color:#fef08a}
+.note.red{background:rgba(127,29,29,.2);border:1px solid #b91c1c;color:#f87171}
+.badge{display:inline-block;padding:1px 6px;font-size:10px;line-height:1.5;text-transform:uppercase;letter-spacing:.03em;border-radius:4px;background:rgba(37,99,235,.2);color:var(--blue4);border:1px solid rgba(59,130,246,.4);vertical-align:1px;white-space:nowrap}
+.badge.gray{background:rgba(115,115,115,.15);color:var(--g400);border-color:var(--g700)}
+
+/* memory plan: one cell per gigabyte */
+.strip{position:relative;height:36px;border-radius:4px;overflow:hidden;background:var(--g800);display:flex;margin-top:4px}
+.strip i{display:block;height:100%;transition:width .35s}
+.strip::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(100%/24 - 2px),var(--g900) calc(100%/24 - 2px),var(--g900) calc(100%/24))}
+.c-other{background:var(--g600)} .c-w{background:var(--blue)} .c-a{background:var(--purple)} .c-o{background:var(--amber)}
+.c-res{background:repeating-linear-gradient(135deg,var(--g700) 0 4px,var(--g800) 4px 8px);margin-left:auto}
+.scale{display:flex;justify-content:space-between;font-size:10px;color:var(--g500);margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 20px;margin-top:8px;font-size:12px;color:var(--g400)}
+.legend b{color:var(--g200);font-weight:normal}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.memhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;color:var(--g200)}
+.memhead small{color:var(--g400);font-size:12px}
+
+.thumbs{display:flex;gap:6px;overflow-x:auto;margin-top:10px}
+.thumbs img{width:72px;height:72px;object-fit:cover;border-radius:4px;flex:none}
+pre{background:var(--g950);border-radius:8px;padding:16px;overflow:auto;max-height:340px;font-size:12px;line-height:1.5;margin:0;color:var(--g300);white-space:pre-wrap;word-break:break-word}
+
+table{width:100%;border-collapse:collapse;font-size:14px;color:var(--g300);text-align:left}
+thead{font-size:12px;text-transform:uppercase;background:var(--g800);color:var(--g400)}
+th,td{padding:10px 16px;vertical-align:top} th{font-weight:normal}
+tbody tr{border-top:1px solid var(--g800)}
+tbody tr.link{cursor:pointer} tbody tr.link:hover{background:rgba(38,38,38,.5)}
+.tablewrap{background:var(--g900);border-radius:0 0 6px 6px;overflow-x:auto}
+.card .tablewrap{background:var(--g950);border-radius:6px}
+.qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px;border-radius:8px 8px 0 0;color:#fff}
+.qhead.run{background:#14532d} .qhead.idle{background:#475569} .qhead h2{font-size:15px;font-weight:600}
+.pill{padding:2px 8px;background:var(--g700);border-radius:999px;font-size:12px;color:var(--g300)}
+.st-running{color:var(--blue4)} .st-done{color:#4ade80} .st-failed{color:#f87171} .st-other{color:var(--g400)}
+.empty{padding:24px;text-align:center;color:var(--g400)}
+
+.panel{background:var(--g900);border-radius:12px;border:1px solid var(--g800);overflow:hidden;min-width:0}
+.panel>header{background:var(--g800);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--g100)}
+.panel>.body{padding:16px;display:grid;gap:20px}
+.spill{padding:4px 12px;border-radius:999px;font-size:14px;white-space:nowrap}
+.spill.running{background:rgba(16,185,129,.1);color:var(--emerald)} .spill.done{background:rgba(59,130,246,.1);color:var(--blue)}
+.spill.failed{background:rgba(244,63,94,.1);color:var(--rose)} .spill.other{background:rgba(115,115,115,.1);color:var(--g400)}
+.prog{background:var(--g800);border-radius:999px;height:8px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--blue);border-radius:999px;transition:width .4s}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px}
+.stats p:first-child{font-size:12px;color:var(--g400)} .stats p:last-child{font-size:14px;color:var(--g200);font-weight:bold}
+.between{display:flex;justify-content:space-between;font-size:14px;color:var(--g400)} .between b{color:var(--g200);font-weight:normal}
+svg.chart{width:100%;height:150px;background:var(--g950);border-radius:8px;display:block}
+.samples{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.samples img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;color:var(--g400)} .kv b{color:var(--g200);font-weight:normal}
+td.ok{color:#4ade80} td.no{color:var(--g500)} td.tight{color:var(--amber)}
+
+dialog{background:var(--g900);color:var(--g100);border:1px solid var(--g700);border-radius:8px;padding:16px;width:min(560px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h2{font-size:18px;font-weight:600;text-transform:uppercase;color:var(--g500)}
+.dirlist{max-height:46vh;overflow:auto;border:1px solid var(--g700);border-radius:4px;margin:10px 0;background:var(--g800)}
+.dirlist button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--g700);padding:6px 12px;cursor:pointer}
+.dirlist button:hover{background:var(--g700)}
+.spin{width:12px;height:12px;border:2px solid var(--g600);border-top-color:var(--blue4);border-radius:50%;animation:spin 1s linear infinite;flex:none;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><b>Dojo</b><span>24</span></div>
+    <ul class="nav">
+      <li><a href="#new" data-nav="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>New Job</a></li>
+      <li><a href="#queue" data-nav="queue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Queue</a></li>
+      <li><a href="#fit" data-nav="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>GPU Fit</a></li>
+    </ul>
+    <div class="active" id="activeJobs"></div>
+    <div class="sidegpu" id="sideGpu">Looking for the GPU</div>
+    <div class="ver">LoRA training for Krea 2, MOSS-Image, H3 Image</div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <h1 id="viewTitle">New Training Job</h1>
+      <div class="grow"></div>
+      <div id="topActions" style="display:flex;gap:8px;align-items:center"></div>
+    </div>
+    <div class="content">
+
+      <section class="view" id="v-new">
+        <div id="formError"></div>
+        <div class="grid g4">
+          <section class="card"><h2>Job</h2>
+            <label class="l" for="name">Training Name</label><input type="text" id="name" placeholder="my_first_lora_v1" spellcheck="false">
+            <label class="l" for="trigger">Trigger Word</label><input type="text" id="trigger" placeholder="optional" spellcheck="false">
+            <label class="l" for="goal">Training Goal</label><select id="goal"></select>
+            <p class="hint" id="goalNote"></p>
+          </section>
+          <section class="card"><h2>Model</h2>
+            <label class="l" for="family">Model Architecture</label><select id="family"></select>
+            <label class="l" for="base">Base Model</label><select id="base"></select>
+            <div id="teWrap" hidden><label class="l" for="te">Text Encoder</label><select id="te"></select></div>
+            <p class="hint" id="baseNote"></p>
+          </section>
+          <section class="card"><h2>Training</h2>
+            <label class="l" for="detail">Resolution</label><select id="detail"></select>
+            <label class="l" for="batch">Batch Size</label><select id="batch"><option>1</option><option>2</option><option>4</option></select>
+            <label class="l" for="steps">Steps</label><input type="number" id="steps" min="50" step="50" placeholder="auto">
+            <label class="l" for="lr">Learning Rate</label><input type="text" id="lr" placeholder="auto">
+          </section>
+          <section class="card"><h2>Target</h2>
+            <label class="l" for="rank">Linear Rank</label><input type="number" id="rank" min="2" max="128" placeholder="auto">
+            <label class="sw"><input type="checkbox" id="copy" checked><i></i><span id="copyLabel">Copy to ComfyUI when done</span></label>
+            <p class="hint" id="saveNote"></p>
+          </section>
+        </div>
+
+        <div class="grid">
+          <section class="card"><h2>GPU Memory Plan</h2>
+            <div class="memhead"><span id="memTitle">GPU memory</span><small id="memSource"></small></div>
+            <div class="strip" id="strip" role="img" aria-label="Memory use, one cell per gigabyte"></div>
+            <div class="scale"><span>0</span><span>4</span><span>8</span><span>12</span><span>16</span><span>20</span><span>24 GB</span></div>
+            <div class="legend" id="legend"></div>
+            <div id="memNotes"></div>
+          </section>
+        </div>
+
+        <div class="grid g2">
+          <section class="card"><h2>Dataset</h2>
+            <label class="l" for="dataset">Folder Path</label>
+            <div class="inrow"><input type="text" id="dataset" placeholder="E:\datasets\my_character" spellcheck="false"><button class="btn" id="browse" type="button">Browse</button></div>
+            <p class="hint" id="dsInfo">Subfolders are included. Put a .txt caption next to each image. Images without one use the trigger word, or an empty caption if that is blank too.</p>
+            <div class="thumbs" id="thumbs"></div>
+          </section>
+          <section class="card"><h2>Sample</h2>
+            <label class="sw" style="margin-top:4px"><input type="checkbox" id="previews" checked><i></i><span>Render preview images at every checkpoint</span></label>
+            <label class="l" for="prompts">Sample Prompts, one per line</label>
+            <textarea id="prompts" placeholder="Leave empty for four standard prompts built from the trigger word."></textarea>
+          </section>
+        </div>
+
+        <div class="grid">
+          <details class="card" open><summary><h2>Why these settings on this card</h2></summary>
+            <div class="tablewrap"><table><thead><tr><th>Setting</th><th>Value</th><th>Chosen by</th><th>Reason</th></tr></thead><tbody id="whyBody"><tr><td colspan="4" class="empty">Pick a dataset folder to see the plan.</td></tr></tbody></table></div>
+          </details>
+          <details class="card"><summary><h2>Engine config</h2></summary><pre id="yaml">Pick a dataset folder to see the config.</pre></details>
+        </div>
+      </section>
+
+      <section class="view" id="v-queue">
+        <div id="queueHead"></div>
+        <div class="tablewrap"><table><thead><tr><th>Name</th><th style="min-width:180px">Steps</th><th>Model</th><th>Status</th><th>Info</th><th style="text-align:right">Actions</th></tr></thead><tbody id="queueBody"></tbody></table></div>
+      </section>
+
+      <section class="view" id="v-job"><div id="jobView"></div></section>
+
+      <section class="view" id="v-fit"><div id="fitView"><p class="empty">Loading</p></div></section>
+    </div>
+  </main>
+</div>
+
+<dialog id="picker">
+  <h2>Dataset folder</h2>
+  <p class="hint" id="pickPath" style="word-break:break-all"></p>
+  <div class="dirlist" id="dirlist"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn" id="pickCancel" type="button">Cancel</button>
+    <button class="btn green" id="pickUse" type="button">Use this folder</button>
+  </div>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const api = async (url, body) => {
+  const r = await fetch(url, body === undefined ? {} : {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || "Request failed");
+  return data;
+};
+const gb = n => (Math.round(n * 10) / 10).toFixed(1);
+const ACTIVE = ["running","queued","waiting","starting"];
+const LABEL = {queued:"queued", waiting:"waiting for memory", starting:"starting", running:"running", done:"completed", failed:"failed", stopped:"stopped", interrupted:"interrupted"};
+const stClass = s => s === "running" || s === "starting" ? "running" : s === "done" ? "done" : s === "failed" ? "failed" : "other";
+
+const state = {family:"krea2", base:"", goal:"character", detail:"balanced", batch:1, catalog:null, system:null, plan:null, jobs:[], job:null, stepsTouched:false, view:"new", jobId:null};
+try { const saved = JSON.parse(localStorage.getItem("kmt2") || "{}"); ["family","base","goal","detail","batch","datasetPath"].forEach(k => { if (saved[k] !== undefined) state[k] = saved[k]; }); } catch (e) {}
+const remember = () => { try { localStorage.setItem("kmt2", JSON.stringify({family:state.family, base:state.base, goal:state.goal, detail:state.detail, batch:state.batch, datasetPath:$("dataset").value})); } catch (e) {} };
+const errBox = msg => `<div class="note red" style="margin:0 0 16px">${esc(msg)}</div>`;
+
+/* ---------- routing ---------- */
+function route() {
+  const [view, id] = (location.hash.replace(/^#/, "") || "new").split("/");
+  state.view = ["new","queue","job","fit"].includes(view) ? view : "new"; state.jobId = id || null;
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + state.view));
+  document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (state.view === "job" ? "queue" : state.view)));
+  renderTop();
+  if (state.view === "job") { state.job = null; $("jobView").innerHTML = `<p class="empty">Loading</p>`; refreshJobs(); }
+  if (state.view === "fit") loadFit();
+  if (state.view === "queue") renderQueue();
+}
+window.addEventListener("hashchange", route);
+
+let topKey = "";
+function renderTop() {
+  const t = $("viewTitle"), a = $("topActions"), j = state.job;
+  const busy = state.jobs.some(x => ACTIVE.includes(x.status));
+  const key = [state.view, !!state.plan, state.system?.engine_ready, busy, j?.id, j?.status].join("|");
+  if (key === topKey) return; topKey = key;
+  if (state.view === "new") {
+    t.textContent = "New Training Job";
+    a.innerHTML = `<button class="btn green" id="create" type="button" ${state.plan && state.system?.engine_ready ? "" : "disabled"}>${busy ? "Add to Queue" : "Create Job"}</button>`;
+    $("create").onclick = createJob;
+  } else if (state.view === "queue") {
+    t.textContent = "Queue"; a.innerHTML = `<a class="btn" href="#new" style="text-decoration:none">New Training Job</a>`;
+  } else if (state.view === "fit") {
+    t.textContent = "GPU Fit"; a.innerHTML = "";
+  } else {
+    t.textContent = j ? `Job: ${j.name}` : "Job";
+    let b = `<a class="btn" href="#queue" style="text-decoration:none">Back to Queue</a>`;
+    if (j) {
+      if (ACTIVE.includes(j.status)) b += `<button class="btn red" data-act="stop" type="button">${j.status === "running" || j.status === "starting" ? "Stop" : "Remove from Queue"}</button>`;
+      if (["stopped","failed","interrupted"].includes(j.status)) b += `<button class="btn green" data-act="resume" type="button">Resume</button>`;
+      if (!["running","starting"].includes(j.status)) b += `<button class="btn" data-act="delete" type="button">Delete</button>`;
+    }
+    a.innerHTML = b;
+    a.querySelectorAll("[data-act]").forEach(x => x.onclick = () => jobAction(state.jobId, x.dataset.act));
+  }
+}
+
+/* ---------- form ---------- */
+function fillSelect(id, options, value) {
+  $(id).innerHTML = options.map(o => `<option value="${esc(o.v)}" ${o.disabled ? "disabled" : ""}>${esc(o.label)}</option>`).join("");
+  if (options.some(o => String(o.v) === String(value) && !o.disabled)) $(id).value = value;
+}
+function renderForm() {
+  const c = state.catalog; if (!c) return;
+  fillSelect("family", Object.entries(c.families).map(([v, f]) => ({v, label:f.label})), state.family);
+  state.family = $("family").value;
+  const all = c.bases.concat(c.local).filter(b => b.family === state.family);
+  fillSelect("base", all.map(b => ({v:b.id, disabled:!!b.blocked,
+    label: (b.id.startsWith("file:") ? "Your checkpoint: " : "") + b.label + (b.blocked ? " (cannot be loaded)" : b.download ? " (downloads on first run)" : "")})), state.base);
+  state.base = $("base").value;
+  const b = all.find(x => x.id === state.base);
+  $("baseNote").innerHTML = `${esc(c.families[state.family].params)}.<br>${esc(b?.note || "")}`;
+  fillSelect("goal", Object.entries(c.goals).map(([v, g]) => ({v, label:g.label})), state.goal);
+  state.goal = $("goal").value;
+  $("goalNote").textContent = c.goals[state.goal].hint;
+  fillSelect("detail", Object.entries(c.detail).map(([v, d]) => ({v, label:`${d.label}: ${d[state.family].join(" + ")} px`})), state.detail);
+  state.detail = $("detail").value;
+  $("batch").value = String(state.batch);
+  $("teWrap").hidden = state.family !== "moss_image";
+  fillSelect("te", c.moss_text_encoders.map(t => ({v:t.id, label:t.label + (t.download ? " (downloads)" : "")})), $("te").value);
+  const dir = state.system?.lora_dirs?.[state.family];
+  $("copyLabel").textContent = dir ? `Copy to ComfyUI ${dir} when done` : "Copy to ComfyUI when done";
+}
+["family","base","goal","detail","batch"].forEach(id => $(id).addEventListener("change", () => {
+  state[id] = id === "batch" ? Number($(id).value) : $(id).value;
+  if (id === "family") state.base = "";
+  if (["goal","batch","family"].includes(id) && !state.stepsTouched) $("steps").value = "";
+  renderForm(); remember(); replan();
+}));
+
+function form() {
+  return {base:state.base, name:$("name").value, trigger:$("trigger").value, dataset:$("dataset").value.trim(), goal:state.goal, detail:state.detail,
+          batch:state.batch, steps:state.stepsTouched ? $("steps").value : "", rank:$("rank").value, lr:$("lr").value, text_encoder:$("te").value,
+          prompts:$("prompts").value, previews:$("previews").checked, copy_to_comfy:$("copy").checked};
+}
+let dsTimer, planTimer;
+async function inspect() {
+  const path = $("dataset").value.trim();
+  if (!path) { $("thumbs").innerHTML = ""; return replan(); }
+  const d = await api("/api/dataset", {path, batch: state.batch});
+  if (!d.ok) { $("dsInfo").innerHTML = `<span style="color:#f87171">${esc(d.error)}</span>`; $("thumbs").innerHTML = ""; }
+  else {
+    const missing = d.images - d.captioned;
+    $("dsInfo").textContent = `${d.images} images in ${d.folders.length} folder${d.folders.length > 1 ? "s" : ""}. ` + (missing === 0 ? "Every image has a caption." : `${d.captioned === 0 ? "None have" : `${missing} have no`} caption file${d.captioned === 0 ? "s" : ""}; those use the trigger word as their caption, or an empty caption if you leave it blank.`);
+    $("thumbs").innerHTML = d.previews.map(p => `<img alt="" src="/api/thumb?path=${encodeURIComponent(p)}">`).join("");
+    if (!$("name").value) $("name").value = path.split(/[\\/]/).filter(Boolean).pop().replace(/[^\w-]+/g, "_");
+  }
+  remember(); replan();
+}
+function replan() { clearTimeout(planTimer); planTimer = setTimeout(doPlan, 250); }
+async function doPlan() {
+  $("formError").innerHTML = "";
+  if (!$("dataset").value.trim()) {
+    state.plan = null; $("whyBody").innerHTML = `<tr><td colspan="4" class="empty">Pick a dataset folder to see the plan.</td></tr>`;
+    $("yaml").textContent = "Pick a dataset folder to see the config."; $("saveNote").textContent = ""; renderTop(); return renderMemory();
+  }
+  const p = await api("/api/plan", form());
+  if (!p.ok) { state.plan = null; $("formError").innerHTML = errBox(p.error); renderTop(); return renderMemory(); }
+  state.plan = p;
+  if (!state.stepsTouched) $("steps").value = p.steps;
+  $("rank").placeholder = p.rank; $("lr").placeholder = p.lr;
+  $("yaml").textContent = p.yaml;
+  $("saveNote").textContent = `A checkpoint is saved every ${p.save_every} steps; the last 6 are kept.`;
+  $("whyBody").innerHTML = whyRows(p.why);
+  if (!state.system?.engine_ready) $("formError").innerHTML = errBox("The training engine is not installed yet. Run setup.bat in the toolkit folder.");
+  renderTop(); renderMemory();
+}
+const whyRows = rows => rows.map(r => `<tr><td style="white-space:nowrap;color:var(--g200)">${esc(r.setting)}</td><td>${esc(r.value)}</td><td><span class="badge ${r.basis === "card" ? "" : "gray"}">${r.basis === "card" ? "this card" : "engine default"}</span></td><td>${esc(r.why)}</td></tr>`).join("");
+async function createJob() {
+  try { const j = await api("/api/jobs", form()); await refreshJobs(); location.hash = "#job/" + j.id; }
+  catch (e) { $("formError").innerHTML = errBox(e.message); }
+}
+$("dataset").addEventListener("input", () => { clearTimeout(dsTimer); dsTimer = setTimeout(inspect, 500); });
+$("steps").addEventListener("input", () => { state.stepsTouched = $("steps").value !== ""; replan(); });
+["name","trigger","rank","lr","prompts"].forEach(id => $(id).addEventListener("input", replan));
+["te","previews","copy"].forEach(id => $(id).addEventListener("change", replan));
+
+/* ---------- memory plan ---------- */
+function renderMemory() {
+  const s = state.system, p = state.plan;
+  if (!s || !s.gpu) { $("sideGpu").textContent = "No NVIDIA GPU found"; return; }
+  const g = s.gpu, total = g.total_gb;
+  $("sideGpu").innerHTML = `<b>${esc(g.name)}</b>${g.temp_c != null ? `, ${g.temp_c}°C` : ""}<div class="thin"><i style="width:${g.used_gb / total * 100}%"></i></div>${gb(g.used_gb)} / ${Math.round(total)} GB`;
+  const w = v => `${Math.max(0, v) / total * 100}%`;
+  let html, legend, notes = "";
+  if (p) {
+    const b = p.budget, other = g.used_gb, short = b.need_gb + 0.5 - g.free_gb, over = Math.max(0, other + b.need_gb - total);
+    const k = over > 0 ? Math.max(0, total - other) / b.need_gb : 1;
+    html = `<i class="c-other" style="width:${w(other)}"></i><i class="c-w" style="width:${w(b.weights_gb * k)}"></i><i class="c-a" style="width:${w(b.activations_gb * k)}"></i><i class="c-o" style="width:${w(b.overhead_gb * k)}"></i>` + (over > 0 ? "" : `<i class="c-res" style="width:${w(Math.min(s.reserve_gb, total - other - b.need_gb))}"></i>`);
+    legend = `<span><i class="dot c-w"></i>Model weights, ${esc(p.precision)}${b.offload ? `, ${Math.round(b.offload * 100)}% kept in system RAM` : ""} <b>${gb(b.weights_gb)} GB</b></span><span><i class="dot c-a"></i>Training at ${Math.max(...p.resolutions)} px, batch ${p.batch} <b>${gb(b.activations_gb)} GB</b></span><span><i class="dot c-o"></i>LoRA, optimizer, CUDA <b>${gb(b.overhead_gb)} GB</b></span><span><i class="dot c-other"></i>Other apps now <b>${gb(other)} GB</b></span>`;
+    $("memTitle").textContent = `This job needs about ${gb(b.need_gb)} of ${Math.round(total)} GB`;
+    $("memSource").textContent = b.source === "measured" ? "Measured on this card in an earlier run" : "Estimate, replaced by a measurement after the first finished run";
+    if (short > 0) notes += `<div class="note yellow"><span style="flex:1">Other apps hold ${gb(other)} GB, so ${gb(short)} GB more has to be released first. A queued job waits and starts by itself.</span>${s.comfy.running ? `<button class="btn sm" id="freeComfy" type="button">Unload ComfyUI models</button>` : ""}</div>`;
+    notes += p.downloads.map(d => `<div class="note blue">First run downloads ${esc(d)}.</div>`).join("") + p.warnings.map(x => `<div class="note blue">${esc(x)}</div>`).join("");
+  } else {
+    html = `<i class="c-other" style="width:${w(g.used_gb)}"></i>`;
+    legend = `<span><i class="dot c-other"></i>In use by other apps <b>${gb(g.used_gb)} GB</b></span><span>Free <b>${gb(g.free_gb)} GB</b></span>`;
+    $("memTitle").textContent = `${gb(g.free_gb)} of ${Math.round(total)} GB free`; $("memSource").textContent = "";
+  }
+  $("strip").innerHTML = html; $("legend").innerHTML = legend;
+  if ($("memNotes").dataset.html !== notes) { $("memNotes").innerHTML = notes; $("memNotes").dataset.html = notes; const fc = $("freeComfy"); if (fc) fc.onclick = freeComfy; }
+}
+async function freeComfy() {
+  let r = await api("/api/comfy/free", {force:false});
+  if (r.busy) { if (!confirm("ComfyUI is generating right now. Unloading its models will break that job. Unload anyway?")) return; r = await api("/api/comfy/free", {force:true}); }
+  if (!r.ok && r.error) alert(r.error);
+  setTimeout(refreshSystem, 1500);
+}
+
+/* ---------- folder picker ---------- */
+let pickAt = "";
+async function pick(path) {
+  const d = await api("/api/browse?path=" + encodeURIComponent(path));
+  pickAt = d.path;
+  $("pickPath").textContent = d.path ? `${d.path}${d.images ? `  (${d.images} images here)` : ""}` : "This PC";
+  $("pickUse").disabled = !d.path;
+  $("dirlist").innerHTML = (d.parent !== null ? `<button type="button" data-p="${esc(d.parent)}">Up one level</button>` : "") + d.dirs.map(x => `<button type="button" data-p="${esc(x.path)}">${esc(x.name)}</button>`).join("") || `<p class="empty">No subfolders.</p>`;
+}
+$("browse").onclick = () => { $("picker").showModal(); pick($("dataset").value.trim()).catch(() => pick("")); };
+$("dirlist").onclick = e => { const b = e.target.closest("button"); if (b) pick(b.dataset.p); };
+$("pickCancel").onclick = () => $("picker").close();
+$("pickUse").onclick = () => { $("dataset").value = pickAt; $("picker").close(); inspect(); };
+
+/* ---------- queue ---------- */
+function infoOf(j) { return j.status === "running" ? (j.step ? `${j.speed || ""}${j.eta ? `, ${j.eta} left` : ""}` : (j.phase || "Loading the model")) : (j.message || ""); }
+function renderQueue() {
+  const running = state.jobs.find(j => j.status === "running" || j.status === "starting"), g = state.system?.gpu;
+  $("queueHead").innerHTML = `<div class="qhead ${running ? "run" : "idle"}"><h2>${esc(g?.name || "GPU")}</h2><span class="pill"># 0</span><span class="grow"></span><span style="font-style:italic;font-size:14px;color:${running ? "#4ade80" : "#e2e8f0"}">${running ? "Queue Running" : "Idle"}</span></div>`;
+  $("queueBody").innerHTML = state.jobs.length ? state.jobs.map(j => {
+    const pct = j.total ? Math.min(100, j.step / j.total * 100) : 0, sc = stClass(j.status);
+    return `<tr class="link" data-id="${esc(j.id)}"><td style="color:var(--g100);white-space:nowrap">${sc === "running" ? `<span class="spin" style="margin-right:8px"></span>` : ""}${esc(j.name)}</td>
+      <td><div style="font-size:12px;color:var(--g400)">${j.step} / ${j.total}</div><div class="thin" style="height:6px;margin-top:2px"><i style="width:${pct}%"></i></div></td>
+      <td style="white-space:nowrap">${esc(j.summary.base)}</td><td class="st-${sc}" style="white-space:nowrap">${esc(LABEL[j.status] || j.status)}</td>
+      <td style="font-size:12px;color:var(--g400)">${esc(infoOf(j))}</td>
+      <td style="text-align:right;white-space:nowrap">${ACTIVE.includes(j.status) ? `<button class="btn red sm" data-act="stop" type="button">Stop</button>` : `<button class="btn sm" data-act="delete" type="button">Delete</button>`}</td></tr>`;
+  }).join("") : `<tr><td colspan="6" class="empty">No jobs yet. Create one from New Job.</td></tr>`;
+}
+$("queueBody").onclick = e => {
+  const row = e.target.closest("tr[data-id]"); if (!row) return;
+  const act = e.target.closest("[data-act]");
+  if (act) return jobAction(row.dataset.id, act.dataset.act);
+  location.hash = "#job/" + row.dataset.id;
+};
+async function jobAction(id, act) {
+  let body = {};
+  if (act === "delete") {
+    if (!confirm("Delete this job from the list?")) return;
+    body.with_output = confirm("Also delete its checkpoints and preview images from the toolkit's output folder? A LoRA already copied to ComfyUI is kept.");
+  }
+  try { await api(`/api/jobs/${id}/${act}`, body); } catch (err) { alert(err.message); }
+  if (act === "delete" && state.view === "job") location.hash = "#queue";
+  refreshJobs();
+}
+
+/* ---------- job page ---------- */
+function line(points, color, yMin, yMax) {
+  if (points.length < 2) return "";
+  const xs = points.map(p => p[0]), x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const d = points.map(p => `${((p[0] - x0) / (x1 - x0 || 1) * 600).toFixed(1)},${(146 - (p[1] - yMin) / (yMax - yMin || 1) * 138).toFixed(1)}`).join(" ");
+  return `<polyline fill="none" stroke="${color}" stroke-width="1.5" vector-effect="non-scaling-stroke" points="${d}"/>`;
+}
+const smooth = (pts, k) => { let a = null; return pts.map(p => { a = a === null ? p[1] : a + (p[1] - a) * k; return [p[0], a]; }); };
+function renderJob() {
+  const j = state.job; if (!j) return;
+  const pct = j.total ? Math.min(100, j.step / j.total * 100) : 0, sc = stClass(j.status), s = j.summary, g = state.system?.gpu, total = g?.total_gb || 24;
+  const sm = smooth(j.loss || [], 0.08), ys = sm.map(p => p[1]), vram = (j.vram || []).map((v, i) => [i, v]);
+  const old = document.querySelector("#jobView pre"), stick = !old || old.scrollTop + old.clientHeight >= old.scrollHeight - 30, keep = old ? old.scrollTop : 0;
+  $("jobView").innerHTML = `
+  <div class="grid g3">
+    <div class="panel"><header><span>${esc(j.status === "running" ? (j.phase || "Training") : (j.message || LABEL[j.status] || j.status))}</span><span class="spill ${sc}">${esc(LABEL[j.status] || j.status)}</span></header>
+      <div class="body">
+        <div><div class="between"><span>Progress</span><b>Step ${j.step} of ${j.total}</b></div><div class="prog" style="margin-top:8px"><i style="width:${pct}%"></i></div></div>
+        <div class="stats">
+          <div><p>Job Name</p><p>${esc(j.name)}</p></div>
+          <div><p>Speed</p><p>${esc(j.speed || "?")}</p></div>
+          <div><p>Time Left</p><p>${j.status === "running" ? esc(j.eta || "?") : "–"}</p></div>
+          <div><p>Loss</p><p>${j.last_loss != null ? j.last_loss.toFixed(4) : "–"}</p></div>
+          <div><p>Peak GPU Memory</p><p>${j.peak_gb ? gb(j.peak_gb) + " GB" : "–"}</p></div>
+        </div>
+        ${j.spilling ? `<div class="note red" style="margin:0">GPU memory is pinned at the ceiling. The driver is paging into system RAM, which makes steps many times slower. Stop the job and lower batch size or resolution.</div>` : ""}
+        <pre style="height:240px;max-height:none">${esc((j.log || []).join("\n")) || "Waiting for the engine."}</pre>
+      </div>
+    </div>
+    <div style="display:grid;gap:16px;align-content:start;min-width:0">
+      <div class="panel"><header><span>${esc(g?.name || "GPU")}</span><span class="pill"># 0</span></header><div class="body" style="gap:10px">
+        <div><div class="between"><span>Memory</span><b>${g ? `${gb(g.used_gb)} / ${Math.round(total)} GB` : "?"}</b></div><div class="thin"><i style="width:${g ? g.used_gb / total * 100 : 0}%"></i></div></div>
+        <div class="between"><span>Temperature</span><b style="color:${g && g.temp_c >= 80 ? "var(--rose)" : g && g.temp_c >= 50 ? "var(--amber)" : "var(--emerald)"}">${g?.temp_c ?? "?"}°C</b></div>
+        <div class="between"><span>GPU Load</span><b>${g?.util ?? "?"}%</b></div></div></div>
+      <div class="panel"><header><span>Recipe</span></header><div class="body"><div class="kv">
+        <span>Model</span><b>${esc(s.base)}</b><span>Goal</span><b>${esc(s.goal)}</b><span>Resolution</span><b>${(s.resolutions || []).join(" + ")} px</b>
+        <span>Batch</span><b>${s.batch}</b><span>Rank</span><b>${s.rank}</b><span>Learning rate</span><b>${s.lr}</b><span>Weights</span><b>${esc(s.precision)}${s.budget?.offload ? `, ${Math.round(s.budget.offload * 100)}% in system RAM` : ""}</b>
+        <span>Images</span><b>${s.images}</b><span>Planned memory</span><b>${gb(s.budget?.need_gb || 0)} GB</b></div></div></div>
+    </div>
+  </div>
+  <div class="grid g2">
+    <section class="card"><h2>Loss</h2><svg class="chart" viewBox="0 0 600 150" preserveAspectRatio="none">${line(sm, "#3b82f6", Math.min(...ys), Math.max(...ys))}</svg></section>
+    <section class="card"><h2>GPU Memory</h2><svg class="chart" viewBox="0 0 600 150" preserveAspectRatio="none">${line(vram, "#a855f7", 0, total)}</svg></section>
+  </div>
+  <div class="grid"><section class="card"><h2>Samples</h2>${(j.samples || []).length ? `<div class="samples">${j.samples.map(f => `<a href="/api/jobs/${j.id}/sample/${encodeURIComponent(f)}" target="_blank" rel="noopener" title="${esc(f)}"><img loading="lazy" alt="Sample ${esc(f)}" src="/api/jobs/${j.id}/sample/${encodeURIComponent(f)}"></a>`).join("")}</div>` : `<p class="hint">Preview images appear here after each checkpoint.</p>`}
+    ${(j.checkpoints || []).length ? `<p class="hint" style="margin-top:12px">Checkpoints: ${j.checkpoints.map(esc).join(", ")}</p>` : ""}</section></div>`;
+  const pre = document.querySelector("#jobView pre"); if (pre) pre.scrollTop = stick ? pre.scrollHeight : keep;
+}
+
+/* ---------- GPU fit page ---------- */
+async function loadFit() {
+  const f = await api("/api/fit"), g = f.gpu;
+  $("fitView").innerHTML = `<div class="note blue" style="margin:0 0 24px">Every new job starts from these settings on the ${esc(g?.name || "GPU")} (${g ? Math.round(g.total_gb) : "?"} GB, with ${f.reserve_gb} GB kept free for Windows). Memory figures are estimates until a job has finished on this card; after that its measured peak is used.</div>` +
+  f.models.map(m => `<div class="grid g3"><section class="card"><h2>${esc(m.label)}</h2><p class="hint" style="margin:0 0 10px">${esc(m.params)}.</p>
+    <div class="tablewrap"><table><thead><tr><th>Setting</th><th>Default</th><th>Chosen by</th><th>Reason</th></tr></thead><tbody>${whyRows(m.why.filter(r => r.setting !== "Batch size"))}</tbody></table></div></section>
+    <section class="card"><h2>What fits</h2><div class="tablewrap"><table><thead><tr><th>Resolution</th><th>Batch 1</th><th>Batch 2</th><th>Batch 4</th></tr></thead><tbody>${m.rows.map(r => `<tr><td style="color:var(--g200)">${esc(r.detail)}<div class="hint" style="margin:0">${r.resolutions.join(" + ")} px</div></td>${r.cells.map(c => `<td class="${!c.fits ? "no" : c.offload > 0.3 ? "tight" : "ok"}">${c.fits ? gb(c.need_gb) + " GB" : "does not fit"}${c.fits && c.offload ? `<div class="hint" style="margin:0">${Math.round(c.offload * 100)}% in RAM</div>` : ""}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <p class="hint">Green fits on the card. Amber fits only by streaming more than 30% of the model from system RAM, which is slow.</p></section></div>`).join("");
+}
+
+/* ---------- polling ---------- */
+function renderActive() {
+  const act = state.jobs.filter(j => ACTIVE.includes(j.status)).slice(0, 4);
+  $("activeJobs").innerHTML = act.map(j => { const pct = j.total ? j.step / j.total * 100 : 0, run = j.status === "running";
+    return `<a href="#job/${esc(j.id)}"><div class="t">${run ? `<span class="spin"></span>` : ""}${esc(j.name)}</div>${run ? `<div class="thin"><i style="width:${pct}%"></i></div>` : ""}<div class="m"><span class="${run ? "st-running" : ""}">${esc(run ? (j.step ? "training" : (j.phase || "loading").slice(0, 26)) : LABEL[j.status])}</span><span>${run && j.step ? `${j.step}/${j.total}` : ""}</span></div></a>`; }).join("");
+}
+async function refreshJobs() {
+  try {
+    state.jobs = await api("/api/jobs");
+    if (state.view === "job" && state.jobId) {
+      if (state.jobs.some(j => j.id === state.jobId)) { state.job = await api("/api/jobs/" + state.jobId); renderJob(); }
+      else { state.job = null; $("jobView").innerHTML = `<p class="empty">This job no longer exists.</p>`; }
+    }
+    renderActive(); renderTop();
+    if (state.view === "queue") renderQueue();
+  } catch (e) {}
+}
+async function refreshSystem() { try { state.system = await api("/api/system"); renderMemory(); } catch (e) {} }
+
+(async function init() {
+  [state.system, state.catalog] = await Promise.all([api("/api/system"), api("/api/catalog")]);
+  renderForm(); renderMemory(); route();
+  if (state.datasetPath) { $("dataset").value = state.datasetPath; inspect(); }
+  await refreshJobs();
+  setInterval(refreshSystem, 3000); setInterval(refreshJobs, 2500);
+  setInterval(async () => { state.catalog = await api("/api/catalog").catch(() => state.catalog); }, 60000);
+})();
+</script>
+</body>
+</html>

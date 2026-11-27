@@ -1,0 +1,8 @@
+target/
+engine/
+jobs/
+output/
+settings.json
+measured.json
+__pycache__/
+*.tmp

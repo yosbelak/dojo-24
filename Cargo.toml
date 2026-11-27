@@ -1,0 +1,22 @@
+[package]
+name = "dojo-24"
+version = "0.2.0"
+edition = "2024"
+description = "LoRA training for Krea 2, MOSS-Image and MiniMax-H3 Image, planned for a 24 GB GPU (ostris ai-toolkit underneath)"
+license = "MIT"
+
+[dependencies]
+rust-glass = "0.3"
+rfd = "0.18"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "bmp"] }
+ureq = { version = "3", features = ["json"] }
+regex = "1"
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+opt-level = 3
+lto = "thin"

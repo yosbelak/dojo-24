@@ -1,6 +1,7 @@
 @echo off
 rem Rebuilds the training engine from scratch: ai-toolkit at the pinned commit,
-rem a private Python 3.12, PyTorch for CUDA 13.0 and the engine requirements.
+rem a private Python 3.12, PyTorch for CUDA 13.0 and the engine requirements,
+rem then builds the Dojo 24 window (when Rust is installed).
 setlocal
 cd /d "%~dp0"
 set ENGINE_COMMIT=4a7f28532ed6fe81d9f8c00718878bb3b8739015
@@ -23,6 +24,7 @@ uv pip install --python "engine\venv\Scripts\python.exe" torch==2.13.0 torchvisi
 uv pip install --python "engine\venv\Scripts\python.exe" -r "engine\ai-toolkit\requirements.txt" || goto fail
 
 "engine\venv\Scripts\python.exe" -c "import torch;print('PyTorch',torch.__version__,'on',torch.cuda.get_device_name(0))" || goto fail
+where cargo >nul 2>nul && (cargo build --release || goto fail)
 echo.
 echo Done. Start it with "Start Dojo 24.bat".
 pause
